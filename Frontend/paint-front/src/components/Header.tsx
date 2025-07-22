@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header>
-      <input value={drawingName} onChange={(e) => setDrawingName(e.target.value)}
+      <input className='title-input' value={drawingName} onChange={(e) => setDrawingName(e.target.value)}
         placeholder='Untitled Drawing' />
 
       <div className='actions'>
