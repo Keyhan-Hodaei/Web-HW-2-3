@@ -23,6 +23,14 @@ const Canvas: React.FC<CanvasProps> = ({ shapes, setShapes, selectedShape }) => 
     ]);
   };
 
+  const handleShapeDoubleClick = (index: number) => {
+    setShapes(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -39,10 +47,15 @@ const Canvas: React.FC<CanvasProps> = ({ shapes, setShapes, selectedShape }) => 
   };
 
   return (
-    <div className='canvas' ref={canvasRef} onClick={handleClick} onDrop={handleDrop}
+    <div className='canvas' ref={canvasRef} onClick={handleClick} onDragOver={handleDragOver} onDrop={handleDrop}
          style={{ position: 'relative', width: '100%', height: '100%' }}>
       {shapes.map((shape, i) => (
-        <div key={i} style={{ position: 'absolute', left: shape.x, top: shape.y, transform: 'translate(-50%, 50%)', cursor: 'pointer' }}>
+        <div key={i} style={{ position: 'absolute', left: shape.x, top: shape.y, transform: 'translate(-50%, 50%)', cursor: 'pointer' }}
+          onClick={(e) => e.stopPropagation()} 
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            handleShapeDoubleClick(i);
+        }}>
           <Shape type={shape.type} x={0} y={0} />
         </div>
       ))}
