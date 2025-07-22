@@ -3,6 +3,7 @@ import './App.css';
 import Header from './components/Header'
 import Sidebar from './components/Sidebar';
 import Canvas from './components/Canvas';
+import Footer from './components/Footer';
 import { ShapeType, ShapeData } from './components/Shape';
 
 
@@ -27,6 +28,7 @@ function App() {
       <div className='main-content'>
         <div className='canvas-section'>
           <Canvas shapes={shapes} setShapes={setShapes} selectedShape={selectedShape} />
+          <Footer shapes={shapes} />
         </div>
         <Sidebar setSelectedShape={setSelectedShape} selectedShape={selectedShape} />
       </div>

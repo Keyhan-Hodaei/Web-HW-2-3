@@ -103,6 +103,25 @@ tools-section .tool-item:hover {
   margin-bottom: 12px;
 }
 
+.shape-counts {
+  border: 1px solid #222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff;
+  gap: 24px;
+  border-top: 1px solid #e1e4e8;
+}
+
+.shape-count {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  gap: 6px;
+}
+
+
 @media (max-width: 768px) {
   .tools-section {
     display: none;
