@@ -14,16 +14,29 @@ function App() {
   const [drawingName, setDrawingName] = useState<string>('Untitled Drawing');
   
   const exportJSON = () => {
-    
+    const blob = new Blob([JSON.stringify(shapes, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = drawingName + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const importJSON = (file: File) => {
-    
+    file.text().then(txt => {
+      try {
+        const data = JSON.parse(txt) as ShapeData[];
+        setShapes(data);
+      } catch (err) {
+        console.error('Failed to parse JSON', err);
+      }
+    });
   };
 
   return (
     <div className='app-container'>
-      <Header drawingName={drawingName} setDrawingName={setDrawingName} />
+      <Header drawingName={drawingName} setDrawingName={setDrawingName} exportJSON={exportJSON} importJSON={importJSON} />
       
       <div className='main-content'>
         <div className='canvas-section'>
