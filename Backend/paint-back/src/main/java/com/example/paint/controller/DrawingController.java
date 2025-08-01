@@ -1,9 +1,9 @@
-package controller;
+package com.example.paint.controller;
 
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import service.DrawingService;
+import com.example.paint.service.DrawingService;
 
 @RestController
 @RequestMapping("/api/drawings")

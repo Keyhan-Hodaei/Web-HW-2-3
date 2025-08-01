@@ -1,7 +1,7 @@
-package repository;
+package com.example.paint.repository;
 
-import entity.Drawing;
-import entity.User;
+import com.example.paint.entity.Drawing;
+import com.example.paint.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DrawingRepository extends JpaRepository<Drawing, Long> {

@@ -1,12 +1,12 @@
-package service;
+package com.example.paint.service;
 
 
-import entity.Drawing;
-import entity.User;
+import com.example.paint.entity.Drawing;
+import com.example.paint.entity.User;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import repository.DrawingRepository;
-import repository.UserRepository;
+import com.example.paint.repository.DrawingRepository;
+import com.example.paint.repository.UserRepository;
 
 @Service
 public class DrawingService {
