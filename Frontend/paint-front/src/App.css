@@ -21,6 +21,12 @@ header {
   padding: 12px 24px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header-top {
+  display: flex;
   align-items: center;
   gap: 16px;
 }
@@ -31,6 +37,116 @@ header {
   font-size: 1.5rem;
   border: 1px solid #cbd2d9;
   border-radius: 4px;
+}
+
+.username-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+  position: relative;
+}
+
+.username-notification {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-top: 4px;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.username-edit-btn {
+  padding: 4px 8px;
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.username-edit-btn:hover {
+  background: #5a6268;
+}
+
+.username-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username-input {
+  padding: 6px 10px;
+  border: 1px solid #cbd2d9;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 150px;
+}
+
+.username-save-btn {
+  padding: 4px 8px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.username-save-btn:hover {
+  background: #218838;
+}
+
+.username-cancel-btn {
+  padding: 4px 8px;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.username-cancel-btn:hover {
+  background: #c82333;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
 .actions {
@@ -48,8 +164,14 @@ header {
   font-size: 14px;
   transition: background 0.2s;
 }
-.actions button:hover {
+.actions button:hover:not(:disabled) {
   background: #0056b3;
+}
+
+.actions button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .main-content {

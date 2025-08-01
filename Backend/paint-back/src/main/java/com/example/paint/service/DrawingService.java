@@ -21,7 +21,10 @@ public class DrawingService {
     @Transactional
     public void saveDrawing(String username, String content) {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found");
+        if (user == null) {
+            user = new User(username);
+            userRepository.save(user);
+        }
 
         Drawing drawing = drawingRepository.findByUser(user);
         if (drawing == null)
@@ -34,7 +37,9 @@ public class DrawingService {
     @Transactional
     public String getDrawing(String username) {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found");
+        if (user == null) {
+            return null;
+        }
 
         Drawing drawing = drawingRepository.findByUser(user);
         return drawing != null ? drawing.getContent() : null;

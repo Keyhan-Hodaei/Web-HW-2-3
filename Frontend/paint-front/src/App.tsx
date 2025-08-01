@@ -6,12 +6,11 @@ import Canvas from './components/Canvas';
 import Footer from './components/Footer';
 import { ShapeType, ShapeData } from './components/Shape';
 
-
 function App() {
-
   const [shapes, setShapes] = useState<ShapeData[]>([]);
   const [selectedShape, setSelectedShape] = useState<ShapeType | null>(null);
   const [drawingName, setDrawingName] = useState<string>('Untitled Drawing');
+  const [username, setUsername] = useState<string>('');
   
   const exportJSON = () => {
     const blob = new Blob([JSON.stringify(shapes, null, 2)], { type: 'application/json' });
@@ -34,9 +33,15 @@ function App() {
     });
   };
 
+  const handleUsernameChange = () => {
+    setShapes([]);
+    setDrawingName('Untitled Drawing');
+  };
+
   return (
     <div className='app-container'>
-      <Header drawingName={drawingName} setDrawingName={setDrawingName} exportJSON={exportJSON} importJSON={importJSON} />
+      <Header drawingName={drawingName} setDrawingName={setDrawingName} exportJSON={exportJSON} importJSON={importJSON}
+        shapes={shapes} setShapes={setShapes} username={username} setUsername={setUsername} onUsernameChange={handleUsernameChange} />
       
       <div className='main-content'>
         <div className='canvas-section'>
