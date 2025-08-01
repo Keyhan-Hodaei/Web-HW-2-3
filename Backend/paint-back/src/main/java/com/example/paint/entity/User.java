@@ -33,6 +33,6 @@ public class User {
 
     public void setDrawing(Drawing drawing) {
         this.drawing = drawing;
-        if (drawing != null) drawing.setUser(this);
+        if (drawing != null && drawing.getUser() != this) drawing.setUser(this);
     }
 }
