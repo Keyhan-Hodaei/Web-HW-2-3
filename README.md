@@ -2,9 +2,11 @@
 # تمرین دوم درس برنامه‌سازی وب
 
 کیهان هدائی - ۴۰۱۱۰۶۶۹۶<br>
-در این تمرین یک برنامه برای ترسیم نقاشی با استفاده از React ساخته‌ایم.
+در این تمرین یک برنامه برای ترسیم نقاشی با استفاده از React در Front-end و Spring Boot در Back-end ساخته‌ایم.
 
 ## مراحل و جزئیات پیاده‌سازی
+
+## Front-end
 
 ### App.tsx
 
@@ -365,6 +367,231 @@ interface ShapeProps {
       return null;
   }
 ```
+
+## Back-end
+
+### DrawingController.java
+
+در این کلاس با استفاده از RestController Annotation، کلاس DrawingController را به عنوان پایانه REST خود تعریف می‌کنیم. این کلاس دارای دو تابع مهم برای ذخیره‌سازی و دریافت نقاشی‌ها می‌باشد که در ادامه آن‌ها را مشاهده می‌کنیم.
+
+```html
+@RestController
+@RequestMapping("/api/drawings")
+@CrossOrigin(origins = "http://localhost:3000")
+public class DrawingController
+```
+
+- ذخیره‌سازی نقاشی:
+
+```html
+    @PostMapping(value = "/{username}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> saveDrawing(@PathVariable String username, @RequestBody String content) {
+        try {
+            drawingService.saveDrawing(username, content);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+```
+
+این تابع مقادیر username و content را به ترتیب از URL و بدنه درخواست (به فرمت JSON) دریافت می‌کند و برای username داده‌شده، نقاشی را به شکل JSON از طریق لایه سرویس در database ذخیره می‌کند.
+
+- دریافت نقاشی:
+
+```html
+    @GetMapping(value = "/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getDrawing(@PathVariable String username) {
+        try {
+            String content = drawingService.getDrawing(username);
+            return content != null ? ResponseEntity.ok(content) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+```
+
+این تابع مقدار username را از URL دریافت می‌کند و نقاشی آن کاربر را به ما برمی‌گرداند (در صورت نبود نقاشی null برگردانده می‌شود).
+
+
+
+### DrawingService.java
+
+این کلاس نماینده لایه سرویس می‌باشد.
+
+```html
+@Service
+public class DrawingService
+```
+
+این کلاس شامل دو تابع جهت ذخیره‌سازی و دریافت نقاشی‌ها از database می‌باشد.
+
+- تابع ذخیره‌سازی:
+
+```html
+    @Transactional
+    public void saveDrawing(String username, String content) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            user = new User(username);
+            userRepository.save(user);
+        }
+
+        Drawing drawing = drawingRepository.findByUser(user);
+        if (drawing == null)
+            drawing = new Drawing(user, content);
+        else
+            drawing.setContent(content);
+        drawingRepository.save(drawing);
+    }
+```
+
+این تابع به صورت یک تراکنش در database انجام می‌شود. این به این معناست که رشته‌ای از دستورات پشت سر هم انجام می‌شوند و در صورت شکست و انجام نشدن هر یک از آن‌ها کل فرایند متوقف شده و تاثیرات دستورات قبلی خنثی می‌شوند. این تابع در ابتدا کاربر مدنظر را پیدا می‌کند و در صورت نبود کاربر با نام‌کابری username، یک کاربر با آن نام‌کاربری می‌سازد و در database ذخیره می‌کند. در ادامه نقاشی کاربر مذکور از database دریافت می‌شود و محتوای آن با محتوای داده‌شده جابه‌جا می‌شود(در صورت نبود نقاشی برای آن کاربر یک نقاشی جدید با محتوای داده‌شده ساخته می‌شود).
+
+- تابع دریافت:
+
+```html
+    @Transactional
+    public String getDrawing(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return null;
+        }
+
+        Drawing drawing = drawingRepository.findByUser(user);
+        return drawing != null ? drawing.getContent() : null;
+    }
+}
+```
+
+این تابع هم به صورت یک تراکنش در database انجام می‌شود. در ابتدا سعی در یافتن کاربر مدنظر انجام می‌دهیم و در صورت نبود نام‌کاربری داده‌شده در database، عبارت null برگردانده می‌شود. در صورتی که کاربر پیدا شد، نقاشی مربوط به کاربر را از database دریافت کرده و آن را برمی‌گردانیم.
+
+### User.java
+
+این کلاس مربوط به کاربرهایی می‌باشد که از برنامه استفاده می‌کنند. کاربران به صورت JPA Entity ساخته می‌شوند (با استفاده از Entity Annotation). همچنین برای کاربران در database یک جدول با نام users ساخته می‌شود.
+
+```html
+@Entity
+@Table(name = "users")
+public class User
+```
+
+برای کاربران یک عدد id ساخته می‌شود که در صورت ایجاد کاربران جدید به صورت افزایشی به آن‌ها اختصاص داده می‌شود. هر کاربر یک نام‌کاربری خاص دارد که نمی‌تواند خالی باشد. همچنین هر کاربر تنها یک نقاشی می‌تواند داشته باشد (و هر نقاشی تنها یک کاربر دارد):
+
+```html
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Drawing drawing;
+```
+
+
+### Drawing.java
+
+این کلاس مربوط به نقاشی‌هایی می‌باشد که کاربران می‌سازند. این نقاشی‌ها هم به صورت JPA Entity ساخته می‌شوند و جدول مربوط به آن‌ها در database با نام drawing ساخته می‌شود.
+
+```html
+@Entity
+public class Drawing
+```
+
+هر نقاشی مانند کاربران یک id خاص دارد. نقاشی‌ها دارای یک محتوای بزرگ به فرمت JSON هستند. همچنین نقاشی‌ها یک کلید خارجی به جدول کاربران دارند که تنها به یک کاربر مربوط می‌شود.
+
+```html
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Lob
+    private String content;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+```
+
+
+### UserRepository.java
+### DrawingRepository.java
+
+دو interface داریم که از کلاس JpaRepository ارث‌بری می‌کنند. این کلاس توابع findByUser(User user) و findByUsername(String username) را به طور خودکار پیاده‌سازی می‌کند و با استفاده از SQL با database ارتباط برقرار می‌کند. دستورات به صورت زیر خواهند بود:
+
+```html
+SELECT * FROM users WHERE username = ?
+SELECT * FROM drawing WHERE user_id = ?
+```
+
+در ادامه پیاده‌سازی این دو interface را مشاهده می‌کنید:
+
+```html
+public interface UserRepository extends JpaRepository<User, Long> {
+    User findByUsername(String username);
+}
+```
+
+```html
+public interface DrawingRepository extends JpaRepository<Drawing, Long> {
+    Drawing findByUser(User user);
+}
+```
+
+
+
+### PaintApplication.java
+
+این کلاس، کلاس اصلی اجرای برنامه Spring Boot می‌باشد. این کلاس شامل سه تابع مهم می‌باشد.
+
+
+```html
+    public static void main(String[] args) {
+        SpringApplication.run(PaintApplication.class, args);
+    }
+```
+
+این تابع برنامه را با گرفتن ورودی args اجرا می‌کند.
+
+
+
+```html
+    @Bean
+    public CommandLineRunner initiateUsers(UserRepository userRepository) {
+        return args -> {
+            userRepository.save(new User("user1"));
+            userRepository.save(new User("user2"));
+            userRepository.save(new User("user3"));
+        };
+    }
+```
+
+این تابع سه کاربر را به صورت پیش‌فرض در database قرار می‌دهد و این کار در لحظه‌ای که برنامه اجرا شد انجام می‌شود.
+
+```html
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("GET", "POST")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
+    }
+```
+
+این تابع به ما اجازه دسترسی به APIها از دامنه Front-end را می‌دهد. در ابتدا تنظیمات CORS برای تمامی مسیرهای زیر /api اعمال می‌شود. تنها به درخواست‌های ارسال‌شده از http://localhost:3000 پاسخ داده می‌شود. تنها مجاز به methodهای GET و POST می‌باشیم.
+
+
+
+
+
 
 
 
