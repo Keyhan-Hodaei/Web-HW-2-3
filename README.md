@@ -17,18 +17,21 @@
 1. shapes: آرایه‌ای از اشیای به فرم {type, x, y} که هر شکل کشیده‌شده را توصیف می‌کند.
 2. selectedShape: شکل فعلی که کاربر از Sidebar انتخاب کرده است که شامل دایره، مربع و مثلث می‌باشد.
 3. drawingName: عنوانی که در ورودی header نوشته و نمایش داده می‌شود.
+4. username: نام‌کاربری کاربری که از برنامه استفاده می‌کند
 
 <br>
 
 ```html
-const [shapes, setShapes] = useState<ShapeData[]>([]);
-const [selectedShape, setSelectedShape] = useState<ShapeType | null>(null);
-const [drawingName, setDrawingName] = useState<string>('Untitled Drawing');
+  const [shapes, setShapes] = useState<ShapeData[]>([]);
+  const [selectedShape, setSelectedShape] = useState<ShapeType | null>(null);
+  const [drawingName, setDrawingName] = useState<string>('Untitled Drawing');
+  const [username, setUsername] = useState<string>('');
 ```
 
 - توابع:
 1. exportJSON: آرایه shapes را به JSON تبدیل می‌کند، در یک Blob می‌ریزد و در نهایت با یک کلیک دانلود را آغاز می‌کند.
 2. importJSON: فایل JSON انتخاب‌شده را می‌خواند و، داده‌ها را parse می‌کند و shapes را به‌روزرسانی می‌کند.
+3. handleChangeUsername: در صورتی که نام‌کاربری تغییر کند بوم را خالی می‌کند تا نقاشی کاربر قبلی در اختیار کاربر جدید قرار نگیرد.
 
 <br>
 
@@ -53,6 +56,11 @@ const exportJSON = () => {
       }
     });
   };
+
+  const handleUsernameChange = () => {
+    setShapes([]);
+    setDrawingName('Untitled Drawing');
+  };
 ```
 
 - قرارگیری componentها:
@@ -63,7 +71,8 @@ const exportJSON = () => {
 ```html
   return (
     <div className='app-container'>
-      <Header drawingName={drawingName} setDrawingName={setDrawingName} exportJSON={exportJSON} importJSON={importJSON} />
+      <Header drawingName={drawingName} setDrawingName={setDrawingName} exportJSON={exportJSON} importJSON={importJSON}
+        shapes={shapes} setShapes={setShapes} username={username} setUsername={setUsername} onUsernameChange={handleUsernameChange} />
       
       <div className='main-content'>
         <div className='canvas-section'>
@@ -75,6 +84,173 @@ const exportJSON = () => {
     </div>
   );
 ```
+
+### api.ts
+
+این فایل وظیفه مدیریت ارتباط با سرور را دارد.
+
+```html
+const API_BASE_URL = 'http://localhost:8080/api';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export const apiService = {
+  saveDrawing,
+  loadDrawing
+};
+```
+
+
+این فایل شامل دو تابع مهم جهت ذخیره و یا دریافت فایل از سمت سرور می‌باشد که در ادامه به آن‌ها می‌پردازیم.
+
+
+- ذخیره‌سازی:
+
+
+```html
+  async saveDrawing(username: string, shapes: any[]): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/drawings/${username}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(shapes),
+      });
+
+      if (response.ok) {
+        return { success: true };
+      } else {
+        return { success: false, error: `Failed to save drawing: ${response.statusText}` };
+      }
+    } catch (error) {
+      return { success: false, error: `Network error: ${error}` };
+    }
+  }
+```
+
+آرایه اشکال را به شکل JSON در‌می‌آورد و درخواست POST را به آدرس /api/drawings/{username} می‌فرستد و خروجی مناسب را برمی‌گرداند.
+
+
+
+- دریافت:
+
+
+```html
+  async loadDrawing(username: string): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/drawings/${username}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data };
+      } else if (response.status === 404) {
+        return { success: false, error: 'No drawing found for this user' };
+      } else {
+        return { success: false, error: `Failed to load drawing: ${response.statusText}` };
+      }
+    } catch (error) {
+      return { success: false, error: `Network error: ${error}` };
+    }
+  }
+```
+
+
+درخواست GET را به آدرس /api/drawings/{username} می‌فرستد و نقاشی مورد نظر را دریافت می‌کند و خروجی مناسب را برمی‌گرداند.
+
+
+
+### UsernameInput.tsx
+
+این فایل component ورود نام‌کاربری در نوار بالای صفحه را نشان می‌دهد.
+- ورودی‌های UsernameInput tag:
+
+این تگ،‌ propهای مربوط به خودش را دارد که شامل نام‌کاربری، تابع نام‌گذاری نام‌کاربری و تابع صدا زدن هنگام تغییر نام‌کاربری می‌باشند.
+
+```html
+interface UsernameInputProps {
+  username: string;
+  setUsername: (username: string) => void;
+  onUsernameChange: () => void;
+}
+```
+
+این فایل شامل دو تابع مهم می‌باشند که هنگام ویرایش و لغو ویرایش صدا زده می‌شوند.
+
+- حالت ویرایش:
+
+```html
+  const handleSave = () => {
+    if (tempUsername.trim()) {
+      const newUsername = tempUsername.trim();
+      if (newUsername !== username) {
+        onUsernameChange();
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      }
+      setUsername(newUsername);
+      setIsEditing(false);
+    }
+  };
+```
+
+این تابع نام‌کاربری را با حدف whitespace characterهای اطرافش استخراج می‌کند و در صورتی که نام‌کاربری تغییر کرده باشد، آن را تغییر می‌دهد و اطلاعات مربوط به کاربر جدید در اختیار گذاشته می‌شوند.
+
+- لغو ویرایش:
+
+```html
+  const handleCancel = () => {
+    setTempUsername(username);
+    setIsEditing(false);
+  };
+```
+
+این تابع نام‌کاربری قبلی را برمی‌گرداند.
+
+دو حالت نمایشی داریم:
+
+```html
+  if (isEditing) {
+    return (
+      <div className="username-input-container">
+        <input type="text" value={tempUsername} onChange={(e) => setTempUsername(e.target.value)} placeholder="Enter username"
+          className="username-input" autoFocus />
+        <button onClick={handleSave} className="username-save-btn">Save</button>
+        <button onClick={handleCancel} className="username-cancel-btn">Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="username-display">
+      <span>User: {username || 'Not set'}</span>
+      <button onClick={() => setIsEditing(true)} className="username-edit-btn">Edit</button>
+      {showNotification && (
+        <div className="username-notification">
+          Username Changed
+        </div>
+      )}
+    </div>
+  );
+```
+
+در صورتی که در حالت ویرایش باشیم این component به یک شکل و در صورتی که در حالت معمولی باشیم به شکل دیگری نمایش داده خواهد شد.
+
+
+
+
+
+
+
 
 
 ### Header.tsx
@@ -94,12 +270,17 @@ interface HeaderProps {
   setDrawingName: (name: string) => void;
   exportJSON: () => void;
   importJSON: (file: File) => void;
+  shapes: any[];
+  setShapes: (shapes: any[]) => void;
+  username: string;
+  setUsername: (username: string) => void;
+  onUsernameChange: () => void;
 }
 ```
 
 یک تگ <input> داریم که مقدارش از drawingName Props می‌آید و روی هر تغییر رویداد setDrawingName را صدا می‌‌زند تا نام نقاشی به‌روز باشد.
 <br>
-برای دکمه‌ها یه بخش در نظر گرفته شده است. دکمه‌های Export و Import که با کلیک بر روی آن‌ها توابع مربوط بهشان صدا زده می‌شوند (تابع exportJSON که از App ارسال شده است و تابع handleImport که محتوا را می‌خواند و به importJSON می‌فرستد.
+برای دکمه‌ها یک بخش در نظر گرفته شده است. دکمه‌های Export و Import که با کلیک بر روی آن‌ها توابع مربوط بهشان صدا زده می‌شوند (تابع exportJSON که از App ارسال شده است و تابع handleImport که محتوا را می‌خواند و به importJSON می‌فرستد. همچنین دو دکمه Save to Backend و Import from Backend با استفاده از توابع handleExportToBackend و handleImportFromBackend نقاشی را برای کاربر فعلی در database ذخیره می‌کنند.
 
 <br>
 
@@ -107,12 +288,27 @@ interface HeaderProps {
 ```html
   return (
     <header>
-      <input className='title-input' value={drawingName} onChange={(e) => setDrawingName(e.target.value)}
-        placeholder='Untitled Drawing' />
+      <div className="header-top">
+        <input className='title-input' value={drawingName} onChange={(e) => setDrawingName(e.target.value)} 
+          placeholder='Untitled Drawing' />
+        <UsernameInput username={username} setUsername={setUsername} onUsernameChange={onUsernameChange} />
+      </div>
+
+      {message && (
+        <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+          {message}
+        </div>
+      )}
 
       <div className='actions'>
-        <button onClick={exportJSON}>Export</button>
-        <button onClick={triggerFilePicker}>Import</button>
+        <button onClick={exportJSON} disabled={isLoading}>Export to File</button>
+        <button onClick={triggerFilePicker} disabled={isLoading}>Import from File</button>
+        <button onClick={handleExportToBackend} disabled={isLoading || !username}>
+          {isLoading ? 'Saving...' : 'Save to Backend'}
+        </button>
+        <button onClick={handleImportFromBackend} disabled={isLoading || !username}>
+          {isLoading ? 'Loading...' : 'Load from Backend'}
+        </button>
 
         <input ref={fileInput} type='file' accept='application/json' style={{ display: 'none' }} onChange={handleImport}/>
       </div>
